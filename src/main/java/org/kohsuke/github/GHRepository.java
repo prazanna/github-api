@@ -804,6 +804,30 @@ public class GHRepository {
         return response;
     }
 
+  public GHContentUpdateResponse updateContent(String content, String commitMessage, String currentSha, String path) throws IOException {
+    return updateContent(content, commitMessage, currentSha, path, null);
+  }
+
+  public GHContentUpdateResponse updateContent(String content, String commitMessage, String currentSha, String path, String branch) throws IOException {
+    Requester requester = new Requester(root)
+        .with("path", path)
+        .with("message", commitMessage)
+        .with("content", DatatypeConverter.printBase64Binary(content.getBytes()))
+        .with("sha", currentSha)
+        .method("PUT");
+
+    if (branch != null) {
+      requester.with("branch", branch);
+    }
+
+    GHContentUpdateResponse response = requester.to(getApiTailUrl("contents/" + path), GHContentUpdateResponse.class);
+
+    response.getContent().wrap(this);
+    response.getCommit().wrapUp(this);
+
+    return response;
+  }
+
 	public GHMilestone createMilestone(String title, String description) throws IOException {
         return new Requester(root)
                 .with("title", title).with("description", description).method("POST").to(getApiTailUrl("milestones"), GHMilestone.class).wrap(this);
